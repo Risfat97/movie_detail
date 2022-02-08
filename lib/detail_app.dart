@@ -190,7 +190,7 @@ class BodyWidget extends StatefulWidget {
   const BodyWidget({required this.query, Key? key}) : super(key: key);
 
   final String query;
-  final String _keyApi = 'c76d53ac5146fab70e2fbc66e517c036';
+  final String _keyApi = '*';
 
   List<Widget> _buildRowButton(Film? film) {
     return <Widget>[
