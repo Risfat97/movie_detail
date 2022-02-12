@@ -1,31 +1,16 @@
 import 'dart:io';
 
+import 'package:movie_detail/database_app.dart';
+import 'package:movie_detail/film_app.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import 'dart:convert' as convert;
-
-import 'package:movie_detail/home_app.dart';
-
-class DetailWidget extends StatelessWidget {
-  const DetailWidget({Key? key}) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    final args = ModalRoute.of(context)!.settings.arguments as DetailArguments;
-    return Scaffold(
-        backgroundColor: Colors.black87,
-        appBar: AppBar(
-          title: const Text('Movie Detail'),
-          backgroundColor: Colors.black,
-        ),
-        body: BodyWidget(query: args.query));
-  }
-}
 
 class FavoriteIcon extends StatefulWidget {
-  const FavoriteIcon({Key? key}) : super(key: key);
+  const FavoriteIcon({this.film, Key? key}) : super(key: key);
+
+  final Film? film;
 
   @override
   State<FavoriteIcon> createState() => _FavoriteIconState();
@@ -33,8 +18,16 @@ class FavoriteIcon extends StatefulWidget {
 
 class _FavoriteIconState extends State<FavoriteIcon> {
   bool _isFavorite = false;
+  late DatabaseService _database;
+
+  @override
+  void initState() {
+    super.initState();
+    _database = DatabaseService();
+  }
 
   void _handleClick() {
+    _database.insert(widget.film);
     setState(() {
       _isFavorite = !_isFavorite;
     });
@@ -148,120 +141,67 @@ class ShareIcon extends StatelessWidget {
   }
 }
 
-class Film {
-  final int id;
-  final String title;
-  final String description;
-  final String thumbnail;
-  final int voteCount;
+class BodyWidget extends StatelessWidget {
+  const BodyWidget({required this.future, Key? key}) : super(key: key);
 
-  const Film(
-      {this.id = -1,
-      this.title = '',
-      this.description = '',
-      this.thumbnail = '',
-      this.voteCount = 0});
+  final Future<Film> future;
 
-  factory Film.fromJson(Map<String, dynamic> json) {
-    if (json['total_results'] > 0) {
-      if (json['results'][0]['known_for'] != null &&
-          (json['results'][0]['known_for']).length > 0) {
-        return Film(
-            id: json['results'][0]['known_for'][0]['id'],
-            voteCount: json['results'][0]['known_for'][0]['vote_count'],
-            title: json['results'][0]['known_for'][0]['title'],
-            description: json['results'][0]['known_for'][0]['overview'],
-            thumbnail: 'https://image.tmdb.org/t/p/w500/' +
-                json['results'][0]['known_for'][0]['poster_path']);
-      }
-      return Film(
-          id: json['results'][0]['id'],
-          voteCount: json['results'][0]['vote_count'],
-          title: json['results'][0]['title'] ?? json['results'][0]['name'],
-          description: json['results'][0]['overview'],
-          thumbnail: 'https://image.tmdb.org/t/p/w500/' +
-              json['results'][0]['poster_path']);
-    }
-    return const Film();
+  static Widget fromFilm(Film? film) {
+    return ListView(
+      children: <Widget>[
+        Image.network(
+          film!.thumbnail,
+          height: 500,
+          fit: BoxFit.fitWidth,
+        ),
+        Container(
+          margin: const EdgeInsets.only(top: 16, bottom: 16),
+          child: Center(
+              child: Text(film.title,
+                  style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 20))),
+        ),
+        Container(
+          decoration: null,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: _buildRowButton(film),
+          ),
+        ),
+        Container(
+          margin: const EdgeInsets.only(top: 16),
+          padding:
+              const EdgeInsets.only(top: 8, left: 16, right: 16, bottom: 8),
+          child: Text(
+            film.description,
+            style: const TextStyle(
+                color: Colors.white70,
+                fontSize: 16,
+                fontWeight: FontWeight.normal),
+          ),
+        )
+      ],
+    );
   }
-}
 
-class BodyWidget extends StatefulWidget {
-  const BodyWidget({required this.query, Key? key}) : super(key: key);
-
-  final String query;
-  final String _keyApi = '*';
-
-  List<Widget> _buildRowButton(Film? film) {
+  static List<Widget> _buildRowButton(Film? film) {
     return <Widget>[
-      const FavoriteIcon(),
+      FavoriteIcon(
+        film: film,
+      ),
       RateIcon(nbVote: film!.voteCount),
       ShareIcon(film: film)
     ];
   }
 
-  @override
-  State<BodyWidget> createState() => _BodyWidgetState();
-}
-
-class _BodyWidgetState extends State<BodyWidget> {
-  late Future<Film> _film;
-
-  Future<Film> _get(String url) async {
-    var response = await http.get(Uri.parse(url +
-        '/multi?api_key=${widget._keyApi}&language=fr&query=${widget.query}'));
-    if (response.statusCode == 200) {
-      return Film.fromJson(
-          convert.jsonDecode(response.body) as Map<String, dynamic>);
-    }
-    return const Film();
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    _film = _get('https://api.themoviedb.org/3/search');
-  }
-
   FutureBuilder<Film> _buildFutureBuilder() {
     return FutureBuilder<Film>(
-        future: _film,
+        future: future,
         builder: (context, snapshot) {
           if (snapshot.hasData && snapshot.data!.id != -1) {
-            return ListView(
-              children: <Widget>[
-                Image.network(
-                  snapshot.data!.thumbnail,
-                  height: 500,
-                  fit: BoxFit.fitWidth,
-                ),
-                Container(
-                  margin: const EdgeInsets.only(top: 16, bottom: 16),
-                  child: Center(
-                      child: Text(snapshot.data!.title,
-                          style: const TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 20))),
-                ),
-                Container(
-                  decoration: const BoxDecoration(color: Colors.black87),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: widget._buildRowButton(snapshot.data),
-                  ),
-                ),
-                Container(
-                  margin: const EdgeInsets.only(top: 16),
-                  padding: const EdgeInsets.only(
-                      top: 8, left: 16, right: 16, bottom: 8),
-                  child: Text(
-                    snapshot.data!.description,
-                    style: const TextStyle(color: Colors.white70, fontSize: 16),
-                  ),
-                )
-              ],
-            );
+            return fromFilm(snapshot.data);
           } else if (snapshot.hasError ||
               (snapshot.hasData && snapshot.data!.id == -1)) {
             return Center(

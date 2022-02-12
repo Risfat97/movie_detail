@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:movie_detail/detail_app.dart';
+import 'package:movie_detail/favorites_app.dart';
+import 'package:movie_detail/results_search.dart';
 
 class HomeWidget extends StatelessWidget {
   const HomeWidget({Key? key}) : super(key: key);
@@ -11,6 +12,18 @@ class HomeWidget extends StatelessWidget {
         appBar: AppBar(
           title: const Text('Movie Detail'),
           backgroundColor: Colors.black,
+          actions: <Widget>[
+            Padding(
+                padding: const EdgeInsets.only(right: 16),
+                child: IconButton(
+                    onPressed: () {
+                      Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) => const ListFavorite()));
+                    },
+                    icon: const Icon(Icons.list)))
+          ],
         ),
         body: const Center(
           child: SearchWidget(),
@@ -26,19 +39,24 @@ class SearchWidget extends StatefulWidget {
 }
 
 class _SearchWidgetState extends State<SearchWidget> {
-  String _value = '';
+  late TextEditingController _controller;
 
-  void setValue(String newValue) {
-    setState(() {
-      _value = newValue;
-    });
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
   }
 
   Route _createPageRoute() {
     return PageRouteBuilder(
-      settings: RouteSettings(arguments: DetailArguments(_value)),
       pageBuilder: (context, animation, secondaryAnimation) =>
-          const DetailWidget(),
+          ResultSearch(query: _controller.text),
       transitionsBuilder: (context, animation, secondaryAnimation, child) {
         const begin = Offset(0.0, 1.0);
         const end = Offset.zero;
@@ -55,15 +73,13 @@ class _SearchWidgetState extends State<SearchWidget> {
     );
   }
 
-  void _handleSubmit() {
-    List<String> listval = _value.split(" ");
+  void _handleSubmit(String value) {
+    List<String> listval = value.split(" ");
     listval = listval
         .map((element) =>
             "${element[0].toUpperCase()}${element.substring(1).toLowerCase()}")
         .toList();
-    setState(() {
-      _value = listval.join("+");
-    });
+    value = listval.join("+");
     Navigator.of(context).push(_createPageRoute());
   }
 
@@ -78,12 +94,10 @@ class _SearchWidgetState extends State<SearchWidget> {
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           TextField(
+            controller: _controller,
             style: const TextStyle(color: Colors.black, fontSize: 16),
-            onChanged: (String value) {
-              setValue(value);
-            },
             onSubmitted: (String value) {
-              _handleSubmit();
+              _handleSubmit(value);
             },
             decoration: const InputDecoration(
                 border: OutlineInputBorder(),
@@ -95,7 +109,9 @@ class _SearchWidgetState extends State<SearchWidget> {
           Container(
             padding: const EdgeInsets.only(top: 8.0),
             child: ElevatedButton(
-                onPressed: _handleSubmit,
+                onPressed: () {
+                  _handleSubmit(_controller.text);
+                },
                 style: ElevatedButton.styleFrom(
                     textStyle: const TextStyle(fontSize: 20),
                     padding: const EdgeInsets.only(
@@ -109,10 +125,4 @@ class _SearchWidgetState extends State<SearchWidget> {
       )),
     );
   }
-}
-
-class DetailArguments {
-  final String query;
-
-  DetailArguments(this.query);
 }
