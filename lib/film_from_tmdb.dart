@@ -28,6 +28,6 @@ class FilmFromTMDB extends StatelessWidget {
                     icon: const Icon(Icons.list)))
           ],
         ),
-        body: BodyWidget.fromFilm(film));
+        body: BodyWidget.fromFilm(film, false));
   }
 }

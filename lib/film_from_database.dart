@@ -53,6 +53,6 @@ class _FilmFromDatabaseState extends State<FilmFromDatabase> {
                     icon: const Icon(Icons.list)))
           ],
         ),
-        body: BodyWidget(future: _future));
+        body: BodyWidget(future: _future, inFavorite: true));
   }
 }

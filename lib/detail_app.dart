@@ -8,27 +8,34 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
 class FavoriteIcon extends StatefulWidget {
-  const FavoriteIcon({this.film, Key? key}) : super(key: key);
+  const FavoriteIcon({this.film, this.inFavorite = false, Key? key})
+      : super(key: key);
 
   final Film? film;
+  final bool inFavorite;
 
   @override
   State<FavoriteIcon> createState() => _FavoriteIconState();
 }
 
 class _FavoriteIconState extends State<FavoriteIcon> {
-  bool _isFavorite = false;
+  late bool _isFavorite;
   late DatabaseService _database;
 
   @override
   void initState() {
     super.initState();
+    _isFavorite = widget.inFavorite;
     _database = DatabaseService();
   }
 
   void _handleClick() {
-    _database.insert(widget.film);
     setState(() {
+      if (_isFavorite) {
+        _database.delete(widget.film!.id);
+      } else {
+        _database.insert(widget.film);
+      }
       _isFavorite = !_isFavorite;
     });
   }
@@ -142,11 +149,13 @@ class ShareIcon extends StatelessWidget {
 }
 
 class BodyWidget extends StatelessWidget {
-  const BodyWidget({required this.future, Key? key}) : super(key: key);
+  const BodyWidget({required this.future, this.inFavorite = false, Key? key})
+      : super(key: key);
 
   final Future<Film> future;
+  final bool inFavorite;
 
-  static Widget fromFilm(Film? film) {
+  static Widget fromFilm(Film? film, bool isInFavorite) {
     return ListView(
       children: <Widget>[
         Image.network(
@@ -167,7 +176,7 @@ class BodyWidget extends StatelessWidget {
           decoration: null,
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: _buildRowButton(film),
+            children: _buildRowButton(film, isInFavorite),
           ),
         ),
         Container(
@@ -186,22 +195,23 @@ class BodyWidget extends StatelessWidget {
     );
   }
 
-  static List<Widget> _buildRowButton(Film? film) {
+  static List<Widget> _buildRowButton(Film? film, bool isInFavorite) {
     return <Widget>[
       FavoriteIcon(
         film: film,
+        inFavorite: isInFavorite,
       ),
       RateIcon(nbVote: film!.voteCount),
       ShareIcon(film: film)
     ];
   }
 
-  FutureBuilder<Film> _buildFutureBuilder() {
+  FutureBuilder<Film> _buildFutureBuilder(bool isInFavorite) {
     return FutureBuilder<Film>(
         future: future,
         builder: (context, snapshot) {
           if (snapshot.hasData && snapshot.data!.id != -1) {
-            return fromFilm(snapshot.data);
+            return fromFilm(snapshot.data, isInFavorite);
           } else if (snapshot.hasError ||
               (snapshot.hasData && snapshot.data!.id == -1)) {
             return Center(
@@ -235,6 +245,6 @@ class BodyWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return _buildFutureBuilder();
+    return _buildFutureBuilder(inFavorite);
   }
 }
