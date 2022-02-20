@@ -167,6 +167,7 @@ class BodyWidget extends StatelessWidget {
           margin: const EdgeInsets.only(top: 16, bottom: 16),
           child: Center(
               child: Text(film.title,
+                  textAlign: TextAlign.center,
                   style: const TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.bold,

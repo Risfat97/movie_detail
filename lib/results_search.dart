@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:movie_detail/favorites_app.dart';
 import 'package:movie_detail/film_app.dart';
 import 'package:movie_detail/film_from_tmdb.dart';
 import 'package:http/http.dart' as http;
@@ -44,20 +43,9 @@ class _ResultSearchState extends State<ResultSearch> {
     return Scaffold(
         backgroundColor: Colors.white,
         appBar: AppBar(
-            title: const Text('Movie Detail'),
-            backgroundColor: Colors.black,
-            actions: <Widget>[
-              Padding(
-                  padding: const EdgeInsets.only(right: 16),
-                  child: IconButton(
-                      onPressed: () {
-                        Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (context) => const ListFavorite()));
-                      },
-                      icon: const Icon(Icons.list)))
-            ]),
+          title: const Text('Résultat(s)'),
+          backgroundColor: Colors.black,
+        ),
         body: FutureBuilder<List<Film>>(
             future: _futureFilm,
             builder:

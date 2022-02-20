@@ -36,45 +36,66 @@ class _ListFavoriteState extends State<ListFavorite> {
     });
   }
 
+  Future<void> _handleRefresh() async {
+    setState(() {
+      _favorisFuture = _database.getFavorites();
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-        backgroundColor: Colors.white,
-        appBar: AppBar(
-          title: const Text('Movie Detail'),
-          backgroundColor: Colors.black,
-        ),
-        body: FutureBuilder<List<Film>>(
-            future: _favorisFuture,
-            builder: (context, snapshot) {
-              return _buildListView(
-                  snapshot.hasData ? snapshot.data : <Film>[]);
-            }));
+    return WillPopScope(
+        onWillPop: () async {
+          return false;
+        },
+        child: Scaffold(
+            backgroundColor: Colors.white,
+            appBar: AppBar(
+              title: const Text('Favoris'),
+              backgroundColor: Colors.black,
+              automaticallyImplyLeading: false,
+            ),
+            body: FutureBuilder<List<Film>>(
+                future: _favorisFuture,
+                builder: (context, snapshot) {
+                  return _buildListView(
+                      snapshot.hasData ? snapshot.data : <Film>[]);
+                })));
   }
 
   Widget _buildListView(List<Film>? listfilm) {
+    late ListView listView;
     if (listfilm == null || listfilm.isEmpty) {
-      return Center(
-        child: Container(
-          margin: const EdgeInsets.only(top: 8.0),
-          child: const Text(
-            "Aucun film trouvé dans vos favoris",
-            style: TextStyle(color: Colors.black87, fontSize: 18),
-            textAlign: TextAlign.center,
-          ),
-        ),
+      listView = ListView(
+        children: [
+          Container(
+            margin: EdgeInsets.zero,
+            padding: EdgeInsets.zero,
+            width: MediaQuery.of(context).size.width,
+            height: MediaQuery.of(context).size.height - 92,
+            child: const Center(
+                child: Text(
+              "Aucun film trouvé dans vos favoris",
+              style: TextStyle(color: Colors.black87, fontSize: 18),
+              textAlign: TextAlign.center,
+            )),
+          )
+        ],
       );
+    } else {
+      int i = 0;
+      final colors = [Colors.white, Colors.grey.shade200];
+      final List<Widget> widgets = listfilm.map((e) {
+        return FavoriteWidget(
+            film: e,
+            color: colors[(i++) % 2],
+            handleDelete: _handleDelete,
+            key: Key('${e.id}'));
+      }).toList();
+      listView = ListView(children: widgets);
     }
-    int i = 0;
-    final colors = [Colors.white, Colors.grey.shade200];
-    final List<Widget> widgets = listfilm.map((e) {
-      return FavoriteWidget(
-          film: e,
-          color: colors[(i++) % 2],
-          handleDelete: _handleDelete,
-          key: Key('${e.id}'));
-    }).toList();
-    return ListView(children: widgets);
+
+    return RefreshIndicator(child: listView, onRefresh: _handleRefresh);
   }
 }
 
@@ -92,39 +113,46 @@ class FavoriteWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ListTile(
-      leading: Image.network(
-        film.thumbnail,
-      ),
-      title: Text(
-        film.title,
-        style: const TextStyle(color: Colors.black, fontSize: 18),
-      ),
-      subtitle: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Padding(
-          padding: const EdgeInsets.only(bottom: 3),
-          child: Text(film.description,
-              style: const TextStyle(overflow: TextOverflow.ellipsis)),
+    return Dismissible(
+      key: UniqueKey(),
+      child: ListTile(
+        leading: Image.network(
+          film.thumbnail,
         ),
-        Text(
-          film.date,
-          style: const TextStyle(
-              color: Colors.black87, fontWeight: FontWeight.bold),
-        )
-      ]),
-      trailing: IconButton(
-        icon: const Icon(Icons.delete),
-        onPressed: () {
-          handleDelete(film.id);
+        title: Text(
+          film.title,
+          style: const TextStyle(color: Colors.black, fontSize: 18),
+        ),
+        subtitle:
+            Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Padding(
+            padding: const EdgeInsets.only(bottom: 3),
+            child: Text(film.description,
+                style: const TextStyle(overflow: TextOverflow.ellipsis)),
+          ),
+          Text(
+            film.date,
+            style: const TextStyle(
+                color: Colors.black87, fontWeight: FontWeight.bold),
+          )
+        ]),
+        trailing: IconButton(
+          icon: const Icon(Icons.delete),
+          onPressed: () {
+            handleDelete(film.id);
+          },
+        ),
+        onTap: () {
+          Navigator.push(
+              context,
+              MaterialPageRoute(
+                  builder: (context) => FilmFromDatabase(id: film.id)));
         },
+        tileColor: color,
       ),
-      onTap: () {
-        Navigator.push(
-            context,
-            MaterialPageRoute(
-                builder: (context) => FilmFromDatabase(id: film.id)));
+      onDismissed: (DismissDirection direction) {
+        handleDelete(film.id);
       },
-      tileColor: color,
     );
   }
 }
