@@ -17,17 +17,7 @@ class TabNavigator extends StatelessWidget {
 
   final GlobalKey<NavigatorState>? navigatorKey;
   final String initialRoute;
-  /*
-  void _push(BuildContext context) {
-    var routeBuilders = _routeBuilders(context);
 
-    Navigator.push(
-        context,
-        MaterialPageRoute(
-            builder: (context) =>
-                routeBuilders[TabNavigatorRoutes.detail]!(context)));
-  }
-  */
   Map<String, WidgetBuilder> _routeBuilders(BuildContext context) {
     return {
       TabNavigatorRoutes.root: (context) => const HomeWidget(),

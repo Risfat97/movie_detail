@@ -1,6 +1,5 @@
 import 'dart:io';
-
-import 'package:movie_detail/database_app.dart';
+import 'package:movie_detail/services/favorite_service.dart';
 import 'package:movie_detail/film_app.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:path_provider/path_provider.dart';
@@ -20,22 +19,26 @@ class FavoriteIcon extends StatefulWidget {
 
 class _FavoriteIconState extends State<FavoriteIcon> {
   late bool _isFavorite;
-  late DatabaseService _database;
+  final FavoriteService _favoriteService = FavoriteService.getInstance();
 
   @override
   void initState() {
     super.initState();
     _isFavorite = widget.inFavorite;
-    _database = DatabaseService();
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
   }
 
   void _handleClick() {
+    if (_isFavorite) {
+      _favoriteService.handleDeleteFavorite(widget.film!);
+    } else {
+      _favoriteService.handleAddFavorite(widget.film!);
+    }
     setState(() {
-      if (_isFavorite) {
-        _database.delete(widget.film!.id);
-      } else {
-        _database.insert(widget.film);
-      }
       _isFavorite = !_isFavorite;
     });
   }
@@ -198,10 +201,7 @@ class BodyWidget extends StatelessWidget {
 
   static List<Widget> _buildRowButton(Film? film, bool isInFavorite) {
     return <Widget>[
-      FavoriteIcon(
-        film: film,
-        inFavorite: isInFavorite,
-      ),
+      FavoriteIcon(film: film, inFavorite: isInFavorite),
       RateIcon(nbVote: film!.voteCount),
       ShareIcon(film: film)
     ];

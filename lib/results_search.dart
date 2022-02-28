@@ -87,7 +87,11 @@ class _ResultSearchState extends State<ResultSearch> {
     int i = 0;
     final colors = [Colors.white, Colors.grey.shade200];
     final List<Widget> widgets = listfilm!.map((e) {
-      return FilmWidget(film: e, color: colors[(i++) % 2], key: Key('${e.id}'));
+      return FilmWidget(
+        film: e,
+        color: colors[(i++) % 2],
+        key: Key('${e.id}'),
+      );
     }).toList();
     return ListView(children: widgets);
   }

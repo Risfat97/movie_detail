@@ -48,17 +48,16 @@ class DatabaseService {
     }
     final db = await _database;
     final List<Map<String, dynamic>> maps = await db!.query('favoris');
-
-    return List.generate(maps.length, (i) {
-      return Film(
-          id: maps[i]['id'],
-          title: maps[i]['title'],
-          description: maps[i]['description'],
-          voteCount: maps[i]['vote_count'],
-          thumbnail: maps[i]['thumbnail'],
-          isMovie: (maps[i]['is_movie'] == 1),
-          date: maps[i]['date']);
-    });
+    return maps
+        .map((element) => Film(
+            id: element['id'],
+            title: element['title'],
+            description: element['description'],
+            voteCount: element['vote_count'],
+            thumbnail: element['thumbnail'],
+            isMovie: (element['is_movie'] == 1),
+            date: element['date']))
+        .toList();
   }
 
   Future<List<Film>> find(int id) async {
